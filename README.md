@@ -1,13 +1,7 @@
-----
-title: README
-author: Xenia Herr
-----
-
-
 
 # About
 
-Orkan ist a dmenu like tool to launch Programms.
+Orkan ist a dmenu like tool to launch Programms. It is mostly written in Rust and only supports the Wayland Protocol. X11 is not planned, use dmenu. Also, it's written my me for me, so don't expect that i will be very active on issues and merge requests. But feel free to open them, i will look at them.
 
 
 
