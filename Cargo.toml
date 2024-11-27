@@ -1,0 +1,8 @@
+[package]
+name = "Orkan"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rusttype = "0.9.3"
+smithay-client-toolkit = "0.19.2"
