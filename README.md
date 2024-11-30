@@ -9,6 +9,7 @@ Orkan ist a dmenu like tool to launch Programms. It is mostly written in Rust an
 # Read
 
 - [dmenu](https://tools.suckless.org/dmenu/)
+- [wayland-toolkit-example](https://github.com/Smithay/client-toolkit/blob/master/examples/simple_window.rs)
 
 
 # Dependencies
@@ -16,6 +17,9 @@ This will use the following dependencies:
 
 ## Smithay-client-toolkit
 For handling the wayland protocol
+
+## Wayland-client
+Needed Wayland Interface
 
 ## Rusttype
 For Font rendering. There wont be anything else rendered, so this is the only dependency for rendering
