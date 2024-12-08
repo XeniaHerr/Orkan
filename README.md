@@ -24,6 +24,9 @@ Needed Wayland Interface
 ## Rusttype
 For Font rendering. There wont be anything else rendered, so this is the only dependency for rendering
 
+## Fontconfig
+Used for determining the absolute path to a font.
+
 
 
 
@@ -31,10 +34,11 @@ For Font rendering. There wont be anything else rendered, so this is the only de
 ---
 
 - [x] List all Binaries
-- [ ] Draw Window
+- [x] Draw Window
 - [ ] Specify Possible Program Arguments
-- [ ] Render Text in Window
-- [ ] Handle Keyboard Input
+- [x] Render Text in Window
+- [ ] Optimise Rendering
+- [x] Handle Keyboard Input
 - [ ] Handle Select
 - [ ] Launch Program
 

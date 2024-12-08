@@ -1,5 +1,6 @@
 mod orkan;
 
+use orkan::draw_utils::Renderer;
 use orkan::search_element;
 use orkan::window;
 
@@ -18,8 +19,79 @@ use wayland_client::globals;
 use wayland_client::Connection;
 use smithay_client_toolkit::shell::wlr_layer::Anchor;
 
+use fontconfig::Fontconfig;
+
+use rusttype::Font;
+use std::fs;
 
 
+#[allow(dead_code)]
+struct Config {
+
+    left_padding : Option<f32>,
+
+    top_padding : Option<f32>,
+
+    font : Option<String>,
+
+    background_color : [u8; 4],
+
+
+    text_color : [u8; 4],
+}
+
+
+
+fn read_config() -> Config {
+
+
+    let mut _configs = Config {
+        left_padding: Some(0.1),
+        top_padding: Some(0.2),
+
+        font: None,
+        background_color: [0x00, 0x00, 0x00, 0x00],
+        text_color: [0xff, 0xff, 0xff, 0xff],
+    };
+    let arguments = std::env::args().collect::<Vec<String>>();
+
+    let mut args = arguments.iter();
+
+
+    while let Some(arg) = args.next() {
+
+        match arg.as_str() {
+
+            "--top-margin" => {
+
+//                _configs.top_padding = Some(args.next().unwrap().parse::<f32>().unwrap());
+                _configs.top_padding =  Some(arg.split("=").collect::<Vec<&str>>()[1].parse::<f32>().unwrap());
+
+                    if _configs.top_padding.unwrap() > 0.9 {
+                        _configs.top_padding = Some (0.9);
+                    }
+            }
+            "--left-margin" => {
+
+                _configs.left_padding = Some(arg.split("=").collect::<Vec<&str>>()[1].parse::<f32>().unwrap());
+
+                    if _configs.left_padding.unwrap() > 0.9 {
+                        _configs.left_padding = Some (0.9);
+                    }
+
+
+            }
+
+            _ => {}
+        }
+    }
+
+
+
+
+    return _configs;
+
+}
 
 
 
@@ -27,7 +99,20 @@ fn main() {
 
     println!("Staring Orkan");
 
+    let fontname = "Monospace".to_string();
+
+    let fc = Fontconfig::new().unwrap();
+
+    let fontpath = fc.find(fontname.as_str(), None).unwrap();
+    println!("Font path: {:?}", fontpath.path.to_str());
+
+    let font_data : Vec<u8> = fs::read(fontpath.path).unwrap();
+
+    let font = Font::try_from_vec(font_data).unwrap();
+
     let conn : Connection = Connection::connect_to_env().unwrap();
+
+    let _ = read_config();
 
     
 
@@ -52,6 +137,8 @@ fn main() {
     layer.set_margin(10, 0, 0, 50);
     layer.commit();
 
+    let renderer : Renderer = Renderer::new(font, 400, 20);
+
     let pool = SlotPool::new(400* 20 *4, &shm).expect("Failed to create pool");
     println!("Setup done");
 
@@ -63,22 +150,23 @@ fn main() {
 
         exists : true,
 
+        //font : font,
         pool : pool,
-        width : 400,
-        height : 20,
+        //width : 400,
+        //height : 20,
 
+        renderer : renderer,
         keyboard : None,
 
  //       compositor_state : compositor,
 
         buffer : None,
 
-        cur_search : Vec::new(),
+        //cur_search : Vec::new(),
 
         data : search_element::get_binaries(),
 
         has_keyboard : false,
-//        layer_shell : layer_shell,
         layer_surface : layer,
 
         shift : None,
@@ -104,7 +192,6 @@ fn main() {
             break;
         }
 
-        //println!("Loop iterated");
     }
 
 
