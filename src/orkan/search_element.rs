@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::vec::Vec;
 use std::fs;
 
+#[derive(Debug)]
 pub struct SearchElement{
        pub search_string: String,
         pub matches: Vec<u8>,
@@ -11,7 +12,23 @@ pub struct SearchElement{
 }
 
 
- pub fn get_binaries() -> Vec<SearchElement> {
+impl Clone for SearchElement {
+    fn clone(&self) -> Self {
+        return SearchElement { search_string: self.search_string.clone(), matches: self.matches.clone(),
+        is_selected: self.is_selected.clone() };
+    }
+}
+
+
+pub struct Searcher {
+
+    content : Vec<SearchElement>,
+
+}
+
+impl Searcher {
+
+ pub fn binary_searcher() -> Self {
 
     let vars : HashMap<String, String>  = env::vars().collect();
     let path_var = vars.get("PATH").unwrap();
@@ -38,5 +55,17 @@ pub struct SearchElement{
         }
     }
 
-    return binaries;
+    return Searcher { content :binaries };
+}
+
+pub fn simple_search(&self, target: &str) -> Vec<SearchElement> {
+
+    let matches = self.content.iter().filter(|x| x.search_string.contains(target)).cloned().collect::<Vec<_>>();
+
+    return matches;
+
+}
+
+
+
 }

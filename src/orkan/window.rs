@@ -6,7 +6,7 @@ use smithay_client_toolkit::{self, compositor::{CompositorHandler, CompositorSta
 
 use wayland_client::{protocol::{wl_keyboard, wl_seat, wl_shm, wl_surface}, Connection, QueueHandle};
 
-use super::search_element;
+use super::search_element::{Searcher, SearchElement};
 
 use super::draw_utils::Renderer;
 
@@ -45,11 +45,13 @@ pub struct OrkanWindow {
 
     pub renderer : Renderer,
 
+    pub valid_elements : Vec<SearchElement>,
+
 
     pub padding_rel : f32, //TODO: Make Padding proportional
     pub exists : bool,
     pub has_keyboard : bool,
-    pub data : Vec<search_element::SearchElement>,
+    pub data :  Searcher,
   //  pub cur_search : Vec<char>,
     pub highlighted_pos : usize,
 }
@@ -84,7 +86,7 @@ impl OrkanWindow {
             // This is forbidden by the borrow checker. The workaround will be to use a substruct
             // to handle the drawing
 
-            self.renderer.render_full_image(canvas);
+            self.renderer.render_full_image(canvas, self.valid_elements.clone());
             //self.renderer.draw_full_optimised(canvas);
             self.layer_surface.wl_surface().damage_buffer(0,0, width as i32, height as i32);
 
@@ -146,9 +148,10 @@ impl KeyboardHandler for OrkanWindow {
         self.need_update = true;
         if _event.keysym == Keysym::Escape {
             self.exists = false;
+            return;
         }
 
-        else if _event.keysym == Keysym::BackSpace {
+        if _event.keysym == Keysym::BackSpace {
 
             self.renderer.cur_search.pop();
             //TODO: Sort List and Redraw
@@ -163,6 +166,7 @@ impl KeyboardHandler for OrkanWindow {
             self.renderer.cur_search.push(key);
             //TODO: Sort List and Redraw
             println!("Key Pressed: {key:?}");
+            self.valid_elements = self.data.simple_search(self.renderer.cur_search.iter().collect::<String>().as_str());
         }
         
         

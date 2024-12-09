@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::boxed;
+use super::search_element::SearchElement;
 
 use rusttype::{self, Font, Scale, Point};
 
@@ -138,7 +139,20 @@ pub fn render_length(&mut self, content : Vec<char>, font : &Font, scale : Scale
     return width;
 }
 
-pub fn render_full_image(&mut self, canvas : &mut [u8]) {
+pub fn string_length(&self, content : &SearchElement) -> u32 {
+    let string = content.search_string.clone();
+    let v_metrics = self.cache.font.v_metrics(self.scale);
+
+    let glyphs : Vec<_> = self.cache.font.layout(&string, self.scale, rusttype::point(0.0, 0.0 + v_metrics.ascent)).collect();
+    let width = {
+        let min = glyphs.first().map( |g| g.pixel_bounding_box().unwrap().min.x).unwrap();
+        let max = glyphs.last().map( |g| g.pixel_bounding_box().unwrap().min.x).unwrap();
+        max - min
+    };
+    width as u32
+}
+
+pub fn render_full_image(&mut self, canvas : &mut [u8], results : Vec<SearchElement>) {
 
        //     self.cache.build_cache(self.cur_search.clone(), self.height);
             canvas.fill(0xff);
@@ -149,7 +163,7 @@ pub fn render_full_image(&mut self, canvas : &mut [u8]) {
 
             let v_metrics = self.cache.font.v_metrics(scale);
 
-            let glyphs = self.cache.font.layout(&input_field, rusttype::Scale::uniform(14.0), rusttype::point(1.0 ,1.0 + v_metrics.ascent));
+            let glyphs = self.cache.font.layout(&input_field, rusttype::Scale::uniform(18.0), rusttype::point(1.0 ,1.0 + v_metrics.ascent));
 
 
             //Drawin the prompt
@@ -170,7 +184,33 @@ pub fn render_full_image(&mut self, canvas : &mut [u8]) {
             }
 
             //Draw the search queries
+            /*
+             * What i need: - A way to calculate how many characters fit in the line
+             * Take a list of Strings
+             * Wile the sum is smaller that the screen: Add the word to the showable list
+             * returns a list of strings to be drawn
+             *
+             * - Take a list of strings and draw them with a seperator on the screen, If a certain
+             * selected index is reached, switch the color for the back and foreground.
+             */
 
+            let mut point = 300;
+            let mut index = 0;
+            println!("These are the search results");
+            while point < self.width && results.len() > index  {
+
+                let item_width = self.string_length(&results[index]);
+
+                if item_width + point > self.width {
+                    break;
+                }
+
+                    println!("Would've printed: {}", results[index].search_string);
+
+                point += item_width;
+                index += 1;
+            }
+            println!("Would have printed {index} items with a total length of {point}");
 
 
 }

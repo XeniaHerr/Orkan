@@ -163,8 +163,10 @@ fn main() {
         buffer : None,
 
         //cur_search : Vec::new(),
+        
+        valid_elements : Vec::new(),
 
-        data : search_element::get_binaries(),
+        data : search_element::Searcher::binary_searcher(),
 
         has_keyboard : false,
         layer_surface : layer,
