@@ -85,6 +85,7 @@ impl OrkanWindow {
             // to handle the drawing
 
             self.renderer.render_full_image(canvas);
+            //self.renderer.draw_full_optimised(canvas);
             self.layer_surface.wl_surface().damage_buffer(0,0, width as i32, height as i32);
 
             self.layer_surface.wl_surface().frame(qh, self.layer_surface.wl_surface().clone());
@@ -314,11 +315,6 @@ impl CompositorHandler for OrkanWindow {
         ) {
 
 
-        //This has suddendly stopped working, i dont know why.
-        let (mut width , _) = self.output_state.info(_output).unwrap().logical_size.unwrap_or_else(|| {
-            println!("Output has no logical size, this should not happen");
-            (1920, 1080)
-        });
 
 /*
         width = if width < 20 {
@@ -408,6 +404,7 @@ impl  LayerShellHandler for OrkanWindow {
             println!("Size determined by Hyprland");
             *self.renderer.get_width_mut() = configure.new_size.0;
             *self.renderer.get_height_mut() = configure.new_size.1;
+            println!("New Size: {}*{}", self.renderer.get_width(), self.renderer.get_height());
         }
 
 

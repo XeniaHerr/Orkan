@@ -83,3 +83,23 @@ stride : usize,
 
 Solution for size: I configure the window first with x = 0 and opposite anchor it top left and right. Then i have some good values and recalculate the width offset to fit the window. (This might need to have position also as 0 to get the whole width)
 
+
+
+## Restructuring of Rendering
+
+Ideas to restructure the rendering process
+
+
+- FontCache is a struct that turns chars into a vector of pixel vaules, For this it need knowledge of the Font to be used
+    - Optimisations:
+    It Caches the values inside so that they wont have to be redraw multiple times, especially if a character is used multiple times
+
+- Renderer is a struct that places pixelvalues onto a canvas. It gets the pixel values from the FontCache
+. For this it needs knowledge of the dimension of the canvas.
+    - Optimisations:
+    It tries to reuse parts of the previous canvas if necessacy. For 
+
+
+## Again Restrucuring
+
+I think the speed gain from caching single letters is marginal. I think a better way would be to cache all binaries into buffers once they are first drawn... Or i skip cahching entirely and focus on the search algorithm...

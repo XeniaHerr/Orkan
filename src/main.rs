@@ -99,7 +99,7 @@ fn main() {
 
     println!("Staring Orkan");
 
-    let fontname = "Monospace".to_string();
+    let fontname = "Mononoki Nerd Font".to_string();
 
     let fc = Fontconfig::new().unwrap();
 
