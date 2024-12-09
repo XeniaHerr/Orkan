@@ -11,7 +11,6 @@ use super::search_element;
 use super::draw_utils::Renderer;
 
 
-use rusttype::{Font, PositionedGlyph, ScaledGlyph, Glyph};
 
 
 
@@ -64,7 +63,7 @@ impl OrkanWindow {
 
         //println!("Drawing");
 
-            let (width, height) = (self.renderer.get_width(), self.renderer.get_height());
+            let (width, height) = (self.renderer.get_width() , self.renderer.get_height());
 
        //     println!("Width: {width}, Height: {height}");
             let buffer = self.buffer.get_or_insert_with(|| {
@@ -215,6 +214,8 @@ impl OutputHandler for OrkanWindow {
             _qh: &QueueHandle<Self>,
             _output: wayland_client::protocol::wl_output::WlOutput,
         ) {
+        println!("Output Added");
+
 
         
     }
@@ -237,6 +238,7 @@ impl OutputHandler for OrkanWindow {
             _qh: &QueueHandle<Self>,
             _output: wayland_client::protocol::wl_output::WlOutput,
         ) {
+        println!("Output Updated");
         
     }
 
@@ -311,9 +313,6 @@ impl CompositorHandler for OrkanWindow {
             _output: &wayland_client::protocol::wl_output::WlOutput,
         ) {
 
-        if self.output_state.info(_output).is_none() {
-            println!("Output not found");
-        }
 
         //This has suddendly stopped working, i dont know why.
         let (mut width , _) = self.output_state.info(_output).unwrap().logical_size.unwrap_or_else(|| {
@@ -321,23 +320,24 @@ impl CompositorHandler for OrkanWindow {
             (1920, 1080)
         });
 
-
+/*
         width = if width < 20 {
             width
         } else {
-                self.padding_abs = (width as f32 * self.padding_rel).round() as i32;
                 println!("Padding = {}", self.padding_abs);
                 (width as u32 - 2 * self.padding_abs as u32) as i32
-        };
+        }; */
 
-        self.renderer.set_width(width as u32);
+        self.padding_abs = (self.renderer.get_width() as f32 * self.padding_rel).round() as i32;
+        //self.renderer.set_width(width as u32);
 
         //println!("New Monitor = {}*{}", self.renderer.set_width(), self.);
         self.need_update = true;
         // Resetting some default like margins Original in configure
-        self.layer_surface.set_size(width as u32, self.renderer.get_height());
+        //self.layer_surface.set_size(width as u32, self.renderer.get_height());
+        self.layer_surface.set_size(0,20);
         println!("New Margins: Top = 20, left = {}", self.padding_abs);
-        self.layer_surface.set_margin(20, 0, 0, self.padding_abs);
+        self.layer_surface.set_margin(20, self.padding_abs, 0, self.padding_abs);
         self.draw(_conn, _qh);
         
     }
@@ -403,11 +403,11 @@ impl  LayerShellHandler for OrkanWindow {
         self.need_update = true;
 
         if configure.new_size.0 == 0 || configure.new_size.1 == 0 {
-            self.renderer.set_height(20);
+            *self.renderer.get_height_mut() = 20;
         } else {
             println!("Size determined by Hyprland");
-            self.renderer.set_width(configure.new_size.0);
-            self.renderer.set_height(configure.new_size.1);
+            *self.renderer.get_width_mut() = configure.new_size.0;
+            *self.renderer.get_height_mut() = configure.new_size.1;
         }
 
 

@@ -131,13 +131,13 @@ fn main() {
 
     let layer = layer_shell.create_layer_surface(&qh, surface, Layer::Top, Some("OrkanWindow"), None);
 
-    layer.set_anchor(Anchor::TOP|Anchor::LEFT);
+    layer.set_anchor(Anchor::TOP|Anchor::LEFT|Anchor::RIGHT);
     layer.set_keyboard_interactivity(smithay_client_toolkit::shell::wlr_layer::KeyboardInteractivity::Exclusive);
-    layer.set_size(400, 20);
+    layer.set_size(0, 20);
     layer.set_margin(10, 0, 0, 50);
     layer.commit();
 
-    let renderer : Renderer = Renderer::new(font, 400, 20);
+    let renderer : Renderer = Renderer::new(font, 0, 20);
 
     let pool = SlotPool::new(400* 20 *4, &shm).expect("Failed to create pool");
     println!("Setup done");

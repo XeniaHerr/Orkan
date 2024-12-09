@@ -78,3 +78,8 @@ stride : usize,
 }
 ```
 
+
+### Scratch
+
+Solution for size: I configure the window first with x = 0 and opposite anchor it top left and right. Then i have some good values and recalculate the width offset to fit the window. (This might need to have position also as 0 to get the whole width)
+
