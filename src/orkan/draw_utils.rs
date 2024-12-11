@@ -37,26 +37,26 @@ impl FontCache {
         let scale = Scale::uniform((_height as i32 - 4 ) as f32  );
         let v_metrics = self.font.v_metrics(scale);
         for c in chars.iter() {
-        if let Some(_glyph) = self.map.get(&c) {
-            continue;
-        } else {
-            let s_glyph = self.font.glyph(*c).scaled(scale);
-            let glyph = s_glyph.clone().positioned(Point {x: 0.0, y: 0.0 + v_metrics.ascent});
-            let (width, height, minx, miny) =  if let Some(bb) = glyph.pixel_bounding_box() {
-                (s_glyph.h_metrics().advance_width as u32 , bb.height() as u32, bb.min.x, bb.min.y)
-            }
-            else {
-                (5 as u32, 5 as u32, 0,0)
-            };
+            if let Some(_glyph) = self.map.get(&c) {
+                continue;
+            } else {
+                let s_glyph = self.font.glyph(*c).scaled(scale);
+                let glyph = s_glyph.clone().positioned(Point {x: 0.0, y: 0.0 + v_metrics.ascent});
+                let (width, height, minx, miny) =  if let Some(bb) = glyph.pixel_bounding_box() {
+                    (s_glyph.h_metrics().advance_width as u32 , bb.height() as u32, bb.min.x, bb.min.y)
+                }
+                else {
+                    (5 as u32, 5 as u32, 0,0)
+                };
                 let mut content = Box::new(vec![0xff; width as usize * (v_metrics.ascent.abs()as u32 + v_metrics.descent.abs()  as u32) as usize * 4]);
                 let glyph = self.font.layout(&c.to_string(), scale, Point {x:0.0, y: 0.0 +v_metrics.ascent}).next().unwrap();
                 println!("Height of Glyph: {}, Real Height: {height}", v_metrics.ascent.abs() + v_metrics.descent.abs());
                 glyph.draw(|x,y,v| {
 
-                        let x = x + minx as u32;
-                        let y = y + miny as u32;
-                        let idx = (x + y * width) as usize * 4 ;
-                        content[idx..idx+4].copy_from_slice(&[
+                    let x = x + minx as u32;
+                    let y = y + miny as u32;
+                    let idx = (x + y * width) as usize * 4 ;
+                    content[idx..idx+4].copy_from_slice(&[
                         (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
                         (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
                         (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
@@ -68,8 +68,8 @@ impl FontCache {
                 };
 
                 self.map.insert(*c, rg);
+            }
         }
-    }
     }
 
 
@@ -120,7 +120,7 @@ impl Renderer {
     pub fn get_height(&self) -> u32 {
         return self.height;
     }
-    
+
     pub fn get_width_mut(&mut self) -> &mut u32 {
         &mut self.width
     }
@@ -128,120 +128,141 @@ impl Renderer {
         &mut self.height
     }
 
-pub fn render_length(&mut self, content : Vec<char>, font : &Font, scale : Scale) -> u32 {
+    pub fn render_length(&mut self, content : &SearchElement) -> i32 {
+
+        let content = content.search_string.chars();
 
 
+        let width = content.fold(0, |acc, c| {
+            acc + self.cache.font.glyph(c).scaled(self.scale).h_metrics().advance_width as i32
+        });
 
-    let width = content.iter().fold(0, |acc, c| {
-        acc + font.glyph(*c).scaled(scale).h_metrics().advance_width as u32
-    });
+        return width;
+    }
 
-    return width;
-}
+    pub fn string_length(&self, content : &SearchElement) -> i32 {
+        let string = content.search_string.clone();
+        let v_metrics = self.cache.font.v_metrics(self.scale);
 
-pub fn string_length(&self, content : &SearchElement) -> u32 {
-    let string = content.search_string.clone();
-    let v_metrics = self.cache.font.v_metrics(self.scale);
+        let glyphs : Vec<_> = self.cache.font.layout(&string, self.scale, rusttype::point(0.0, 0.0 + v_metrics.ascent)).collect();
+        let width = {
+            let min = glyphs.first().map( |g| g.pixel_bounding_box().unwrap().min.x).unwrap();
+            let max = glyphs.last().map( |g| g.pixel_bounding_box().unwrap().min.x).unwrap();
+            max - min
+        };
+        width
+    }
 
-    let glyphs : Vec<_> = self.cache.font.layout(&string, self.scale, rusttype::point(0.0, 0.0 + v_metrics.ascent)).collect();
-    let width = {
-        let min = glyphs.first().map( |g| g.pixel_bounding_box().unwrap().min.x).unwrap();
-        let max = glyphs.last().map( |g| g.pixel_bounding_box().unwrap().min.x).unwrap();
-        max - min
-    };
-    width as u32
-}
+    pub fn render_full_image(&mut self, canvas : &mut [u8], results : Vec<SearchElement>) {
 
-pub fn render_full_image(&mut self, canvas : &mut [u8], results : Vec<SearchElement>) {
+        //     self.cache.build_cache(self.cur_search.clone(), self.height);
+        canvas.fill(0xff);
 
-       //     self.cache.build_cache(self.cur_search.clone(), self.height);
-            canvas.fill(0xff);
+        let input_field = self.cur_search.iter().collect::<String>();
 
-            let input_field = self.cur_search.iter().collect::<String>();
+        let scale = rusttype::Scale::uniform(18.0);
 
-            let scale = rusttype::Scale::uniform(18.0);
+        let v_metrics = self.cache.font.v_metrics(scale);
 
-            let v_metrics = self.cache.font.v_metrics(scale);
-
-            let glyphs = self.cache.font.layout(&input_field, rusttype::Scale::uniform(18.0), rusttype::point(1.0 ,1.0 + v_metrics.ascent));
+        let glyphs = self.cache.font.layout(&input_field, rusttype::Scale::uniform(18.0), rusttype::point(1.0 ,1.0 + v_metrics.ascent));
 
 
-            //Drawin the prompt
-            for glyph in glyphs {
-                if let Some(bb) = glyph.pixel_bounding_box() {
-                    glyph.draw(|x,y,v| {
-                        let x = x + bb.min.x as u32;
-                        let y = y + bb.min.y as u32;
-                        let idx = (x + y * self.width) as usize * 4;
-                        canvas[idx..idx+4].copy_from_slice(&[
+        //Drawin the prompt
+        for glyph in glyphs {
+            if let Some(bb) = glyph.pixel_bounding_box() {
+                glyph.draw(|x,y,v| {
+                    let x = x + bb.min.x as u32;
+                    let y = y + bb.min.y as u32;
+                    let idx = (x + y * self.width) as usize * 4;
+                    canvas[idx..idx+4].copy_from_slice(&[
                         (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
                         (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
                         (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
                         0xff as u8]);
 
+                })
+            }
+        }
+
+        //Draw the search queries
+        /*
+         * What i need: - A way to calculate how many characters fit in the line
+         * Take a list of Strings
+         * Wile the sum is smaller that the screen: Add the word to the showable list
+         * returns a list of strings to be drawn
+         *
+         * - Take a list of strings and draw them with a seperator on the screen, If a certain
+         * selected index is reached, switch the color for the back and foreground.
+         */
+
+        let mut offset : i32 = 200; //Offset in Pixels
+
+        let mut index = 0;
+        let space = self.width as i32 - offset - 10;
+        //println!("Found {} results, available space: {space}", results.len());
+        while (offset < space) && (results.len() > index)  {
+
+            let item_width = self.render_length(&results[index]);
+
+            //println!("Item width: {item_width}");
+            //println!("Point = {offset}");
+
+
+            let glyphs = self.cache.font.layout(results[index].search_string.as_str(),self.scale, Point {x: offset as f32, y: v_metrics.ascent + 1.0 } );
+
+            for glyph in glyphs {
+                if let Some(bb) = glyph.pixel_bounding_box() {
+                    glyph.draw(|x,y,v| {
+                        let x = x + bb.min.x as u32; 
+                        let y = y + bb.min.y as u32;
+                        let id = (x + y * self.width) as usize * 4;
+                        let idx = id;
+                        canvas[idx..idx+4].copy_from_slice(&[
+                            (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
+                            (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
+                            (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
+                            0xff as u8]);
+
                     })
                 }
             }
-
-            //Draw the search queries
-            /*
-             * What i need: - A way to calculate how many characters fit in the line
-             * Take a list of Strings
-             * Wile the sum is smaller that the screen: Add the word to the showable list
-             * returns a list of strings to be drawn
-             *
-             * - Take a list of strings and draw them with a seperator on the screen, If a certain
-             * selected index is reached, switch the color for the back and foreground.
-             */
-
-            let mut point = 300;
-            let mut index = 0;
-            println!("These are the search results");
-            while point < self.width && results.len() > index  {
-
-                let item_width = self.string_length(&results[index]);
-
-                if item_width + point > self.width {
-                    break;
-                }
-
-                    println!("Would've printed: {}", results[index].search_string);
-
-                point += item_width;
-                index += 1;
-            }
-            println!("Would have printed {index} items with a total length of {point}");
+            offset = offset + item_width + 10;
+            index = index + 1;
+            //println!("Would have printed {index} items with a total length of {offset}");
 
 
-}
+        }
+
+    }
 
 #[deprecated]
-pub fn draw_full_optimised(&mut self, canvas : &mut [u8]) {
+    pub fn draw_full_optimised(&mut self, canvas : &mut [u8]) {
 
-    self.cache.build_cache(self.cur_search.clone(), self.height);
+        self.cache.build_cache(self.cur_search.clone(), self.height);
 
-    canvas.fill(0xff);
+        canvas.fill(0xff);
 
-    let mut point : usize = (self.width *2) as usize;
+        let mut point : usize = (self.width *2) as usize;
 
-    for c in self.cur_search.iter() {
+        for c in self.cur_search.iter() {
 
-        if let Some(values) = self.cache.draw_chached_char(c) {
+            if let Some(values) = self.cache.draw_chached_char(c) {
 
-            let content = values.content.as_ref();
-            let width = values.stride;
+                let content = values.content.as_ref();
+                let width = values.stride;
 
-            let rows = content.chunks_exact(4 *width  as usize);
+                let rows = content.chunks_exact(4 *width  as usize);
 
-            //assert!(rows.len() == 14);
+                //assert!(rows.len() == 14);
 
-            for (y,row) in rows.enumerate() {
-                let idx = ( y * self.width  as usize + point) * 4 as usize;
-                let end = idx+ (width*4 as u32) as usize;
-                canvas[idx..end].copy_from_slice(row);
-            }
+                for (y,row) in rows.enumerate() {
+                    let idx = ( y * self.width  as usize + point) * 4 as usize;
+                    let end = idx+ (width*4 as u32) as usize;
+                    canvas[idx..end].copy_from_slice(row);
+                }
                 point += width as usize;
+            }
         }
     }
 }
-}
+

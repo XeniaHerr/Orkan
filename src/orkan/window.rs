@@ -156,11 +156,14 @@ impl KeyboardHandler for OrkanWindow {
             self.renderer.cur_search.pop();
             //TODO: Sort List and Redraw
             println!("Backspace Pressed");
+            self.valid_elements = self.data.simple_search(self.renderer.cur_search.iter().collect::<String>().as_str());
         }
 
         else if _event.keysym == Keysym::Return {
             //TODO: Handle spawning Process
             println!("Return Pressed");
+            println!("Selected: {}", self.valid_elements[0].search_string);
+            self.exists = false;
         }
         else if let Some(key) = _event.keysym.key_char() { 
             self.renderer.cur_search.push(key);
