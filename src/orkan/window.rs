@@ -11,6 +11,11 @@ use super::search_element::{Searcher, SearchElement};
 use super::draw_utils::Renderer;
 
 
+use nix::unistd::execve;
+
+use std::ffi::CString;
+
+use std::env;
 
 
 
@@ -164,6 +169,16 @@ impl KeyboardHandler for OrkanWindow {
             println!("Return Pressed");
             println!("Selected: {}", self.valid_elements[0].search_string);
             self.exists = false;
+
+            //unsafe {
+
+                let command = CString::new(self.valid_elements[0].ful_path.clone()).unwrap();
+
+                let args = vec![CString::new(self.valid_elements[0].ful_path.clone()).unwrap()];
+
+                let env = env::vars().map(|(k,v)| { CString::new(format!("{}={}", k,v)).unwrap()}).collect::<Vec<CString>>();
+                execve(&command, &args, &env).expect("Failed to execute");
+            //}
         }
         else if let Some(key) = _event.keysym.key_char() { 
             self.renderer.cur_search.push(key);

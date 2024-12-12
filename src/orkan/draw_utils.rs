@@ -4,6 +4,26 @@ use super::search_element::SearchElement;
 
 use rusttype::{self, Font, Scale, Point};
 
+
+
+
+
+
+fn draw_rect(canvas : &mut [u8], (c_width, x_height) : (u32, u32), x : u32, y : u32, width : u32, height : u32, color : [u8; 4]) {
+
+    for i in 0..height {
+        let start = (x + (y + i) *c_width) as usize *4;
+        let end = start + (width * 4) as usize;
+        for  chunk in canvas[start..end].chunks_exact_mut(4) {
+            chunk.copy_from_slice(&color);
+        }
+
+
+    }
+
+
+}
+
 /**
  * These structs are unused until further desing changes */
 struct RenderedGlyph {
@@ -204,9 +224,14 @@ impl Renderer {
 
             let item_width = self.render_length(&results[index]);
 
+            if index == 0 {
+                draw_rect(canvas, (self.width, self.height), offset as u32, 0, item_width as u32, self.height, [0xab, 0xab, 0xab, 0xff]);
+            }
+
             //println!("Item width: {item_width}");
             //println!("Point = {offset}");
 
+            /* TODO: Implement a way to fill only parts of a rectangle */
 
             let glyphs = self.cache.font.layout(results[index].search_string.as_str(),self.scale, Point {x: offset as f32, y: v_metrics.ascent + 1.0 } );
 
@@ -217,11 +242,13 @@ impl Renderer {
                         let y = y + bb.min.y as u32;
                         let id = (x + y * self.width) as usize * 4;
                         let idx = id;
+                        if v != 0.0 {
                         canvas[idx..idx+4].copy_from_slice(&[
                             (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
                             (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
                             (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
                             0xff as u8]);
+                        }
 
                     })
                 }

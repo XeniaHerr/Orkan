@@ -7,6 +7,7 @@ use std::fs;
 #[derive(Debug)]
 pub struct SearchElement{
        pub search_string: String,
+       pub ful_path: String,
         pub matches: Vec<u8>,
         pub is_selected: bool
 }
@@ -15,7 +16,7 @@ pub struct SearchElement{
 impl Clone for SearchElement {
     fn clone(&self) -> Self {
         return SearchElement { search_string: self.search_string.clone(), matches: self.matches.clone(),
-        is_selected: self.is_selected.clone() };
+        is_selected: self.is_selected.clone(), ful_path: self.ful_path.clone() };
     }
 }
 
@@ -42,7 +43,7 @@ impl Searcher {
 
                     Ok(file) => {
                         let file_name = file.file_name().into_string().unwrap();
-                        binaries.push( SearchElement{ search_string: file_name, matches: Vec::new(), is_selected: false});
+                        binaries.push( SearchElement{ search_string: file_name, matches: Vec::new(), is_selected: false, ful_path : file.path().to_str().unwrap().to_string()});
                     }
 
                     Err(e) => {

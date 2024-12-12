@@ -140,6 +140,7 @@ fn main() {
     let renderer : Renderer = Renderer::new(font, 0, 20);
 
     let pool = SlotPool::new(400* 20 *4, &shm).expect("Failed to create pool");
+
     println!("Setup done");
 
     let mut window = window::OrkanWindow {

@@ -48,12 +48,18 @@ I could store a Hashmap of charactes and their corresponding pixle values. This 
 
 A list of possible options that i may want to support.
 
-- `--left-margin` : int : The left margin of the window
+- `--side-magrin` : int : The side margin of the window
 - `--top-magrin` : int : The top margin of the window
 - `--font` : str : The font to use
 - `--color` : hex : the color with Alpha channel to use for the text
 - `--background-color` : hex : the color of the background
 - `--highlight-color` : hex : the color of the highlight
+
+### Maybe
+- `--rounding` : int : The roundness of the corner windows
+- `--algorithm` : str : the matching algorithm to use
+    - `substring` : substring matching
+    - `fuzzy` : Fuzzy matching
 
 
 # Desing of the Font Optimiser
