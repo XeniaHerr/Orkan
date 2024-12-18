@@ -9,5 +9,6 @@ smithay-client-toolkit = "0.19.2"
 wayland-client = "0.31.7"
 fontconfig = "0.6.0"
 nix = { version = "0.29.0", features = ["process"]}
+clap = { version = "4.5.23", features = ["derive"]}
 
 

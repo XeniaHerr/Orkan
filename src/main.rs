@@ -21,77 +21,13 @@ use smithay_client_toolkit::shell::wlr_layer::Anchor;
 
 use fontconfig::Fontconfig;
 
+
+use clap::Parser;
+use orkan::config::Config;
+
 use rusttype::Font;
 use std::fs;
 
-
-#[allow(dead_code)]
-struct Config {
-
-    left_padding : Option<f32>,
-
-    top_padding : Option<f32>,
-
-    font : Option<String>,
-
-    background_color : [u8; 4],
-
-
-    text_color : [u8; 4],
-}
-
-
-
-fn read_config() -> Config {
-
-
-    let mut _configs = Config {
-        left_padding: Some(0.1),
-        top_padding: Some(0.2),
-
-        font: None,
-        background_color: [0x00, 0x00, 0x00, 0x00],
-        text_color: [0xff, 0xff, 0xff, 0xff],
-    };
-    let arguments = std::env::args().collect::<Vec<String>>();
-
-    let mut args = arguments.iter();
-
-
-    while let Some(arg) = args.next() {
-
-        match arg.as_str() {
-
-            "--top-margin" => {
-
-//                _configs.top_padding = Some(args.next().unwrap().parse::<f32>().unwrap());
-                _configs.top_padding =  Some(arg.split("=").collect::<Vec<&str>>()[1].parse::<f32>().unwrap());
-
-                    if _configs.top_padding.unwrap() > 0.9 {
-                        _configs.top_padding = Some (0.9);
-                    }
-            }
-            "--left-margin" => {
-
-                _configs.left_padding = Some(arg.split("=").collect::<Vec<&str>>()[1].parse::<f32>().unwrap());
-
-                    if _configs.left_padding.unwrap() > 0.9 {
-                        _configs.left_padding = Some (0.9);
-                    }
-
-
-            }
-
-            _ => {}
-        }
-    }
-
-
-
-
-    return _configs;
-
-}
 
 
 
@@ -99,7 +35,15 @@ fn main() {
 
     println!("Staring Orkan");
 
-    let fontname = "Mononoki Nerd Font".to_string();
+    let config : Config = Config::parse();
+
+
+    println!("fg_color {}", config.fontcolor.to_string());
+
+
+    let fontname = config.font.clone();
+
+    println!("Fontname: {}", fontname);
 
     let fc = Fontconfig::new().unwrap();
 
@@ -112,7 +56,6 @@ fn main() {
 
     let conn : Connection = Connection::connect_to_env().unwrap();
 
-    let _ = read_config();
 
     
 
@@ -133,13 +76,14 @@ fn main() {
 
     layer.set_anchor(Anchor::TOP|Anchor::LEFT|Anchor::RIGHT);
     layer.set_keyboard_interactivity(smithay_client_toolkit::shell::wlr_layer::KeyboardInteractivity::Exclusive);
-    layer.set_size(0, 20);
-    layer.set_margin(10, 0, 0, 50);
+    layer.set_size(0, config.height as u32);
+    layer.set_margin(config.top_margin , config.left_margin, 0, config.left_margin);
     layer.commit();
 
-    let renderer : Renderer = Renderer::new(font, 0, 20);
+    let renderer : Renderer = Renderer::new(font,&config, 0, config.height as u32);
 
-    let pool = SlotPool::new(400* 20 *4, &shm).expect("Failed to create pool");
+    // This pool has some stupid default values, because i don't know how big the screen will be
+    let pool = SlotPool::new(1920* 1080 *4, &shm).expect("Failed to create pool");
 
     println!("Setup done");
 
@@ -149,21 +93,17 @@ fn main() {
         output_state : OutputState::new(&globals, &qh),
         shm : shm, 
 
+
         exists : true,
 
-        //font : font,
         pool : pool,
-        //width : 400,
-        //height : 20,
 
         renderer : renderer,
         keyboard : None,
 
- //       compositor_state : compositor,
 
         buffer : None,
 
-        //cur_search : Vec::new(),
         
         valid_elements : Vec::new(),
 

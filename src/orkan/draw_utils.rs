@@ -4,6 +4,9 @@ use super::search_element::SearchElement;
 
 use rusttype::{self, Font, Scale, Point};
 
+use super::color::Color;
+use super::config::Config;
+
 
 
 
@@ -115,19 +118,29 @@ pub struct Renderer {
     width : u32,
     height : u32,
     scale : Scale,
+
+    fg : Color,
+    bg : Color,
+    hgl : Color,
 }
 
 
 #[allow(dead_code)]
 impl Renderer {
 
-    pub fn new(font : Font<'static>, width : u32, height : u32) -> Self {
+    pub fn new(font : Font<'static>, conf : &Config, width : u32, height : u32) -> Self {
+        let fg = conf.fontcolor.clone();
+        let bg = conf.backgroundcolor.clone();
+        let high = conf.highlight.clone();
         Renderer {
             tip : Point{x: 0, y: 0},
             cur_search : Vec::new(),
             width : width,
             height : height,
             scale : Scale::uniform(18.0),
+            fg : fg,
+            bg : bg,
+            hgl : high,
 
             cache : FontCache::new(font),
         }
@@ -176,7 +189,9 @@ impl Renderer {
     pub fn render_full_image(&mut self, canvas : &mut [u8], results : Vec<SearchElement>) {
 
         //     self.cache.build_cache(self.cur_search.clone(), self.height);
-        canvas.fill(0xff);
+        //canvas.fill(0xff);
+
+        draw_rect(canvas, (self.width, self.height), 0, 0, self.width, self.height, self.bg.to_u8());
 
         let input_field = self.cur_search.iter().collect::<String>();
 
@@ -194,11 +209,12 @@ impl Renderer {
                     let x = x + bb.min.x as u32;
                     let y = y + bb.min.y as u32;
                     let idx = (x + y * self.width) as usize * 4;
-                    canvas[idx..idx+4].copy_from_slice(&[
-                        (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
-                        (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
-                        (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
-                        0xff as u8]);
+                    //canvas[idx..idx+4].copy_from_slice(&[
+                    //    (self.bg as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
+                   //     (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
+                      //  (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
+                      //  0xff as u8]);
+                    canvas[idx..idx+4].copy_from_slice(&self.fg.interpolate(&self.bg, v));
 
                 })
             }
@@ -225,7 +241,7 @@ impl Renderer {
             let item_width = self.render_length(&results[index]);
 
             if index == 0 {
-                draw_rect(canvas, (self.width, self.height), offset as u32, 0, item_width as u32, self.height, [0xab, 0xab, 0xab, 0xff]);
+                draw_rect(canvas, (self.width, self.height), offset as u32, 0, item_width as u32, self.height, self.hgl.to_u8());
             }
 
             //println!("Item width: {item_width}");
@@ -242,12 +258,10 @@ impl Renderer {
                         let y = y + bb.min.y as u32;
                         let id = (x + y * self.width) as usize * 4;
                         let idx = id;
-                        if v != 0.0 {
-                        canvas[idx..idx+4].copy_from_slice(&[
-                            (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
-                            (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
-                            (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
-                            0xff as u8]);
+                        if index == 0 {
+                    canvas[idx..idx+4].copy_from_slice(&self.fg.interpolate(&self.hgl, v));
+                        } else {
+                    canvas[idx..idx+4].copy_from_slice(&self.fg.interpolate(&self.bg, v));
                         }
 
                     })
@@ -255,7 +269,6 @@ impl Renderer {
             }
             offset = offset + item_width + 10;
             index = index + 1;
-            //println!("Would have printed {index} items with a total length of {offset}");
 
 
         }
@@ -267,7 +280,7 @@ impl Renderer {
 
         self.cache.build_cache(self.cur_search.clone(), self.height);
 
-        canvas.fill(0xff);
+        draw_rect(canvas, (self.width, self.height), 0, 0, self.width, self.height, self.bg.to_u8());
 
         let mut point : usize = (self.width *2) as usize;
 

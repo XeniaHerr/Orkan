@@ -34,8 +34,6 @@ pub struct OrkanWindow {
     pub layer_surface: LayerSurface,
     pub pool : SlotPool,
 
-//    pub width : u32,
- //   pub height : u32,
     pub shift : Option<u32>,
     pub keyboard : Option<wl_keyboard::WlKeyboard>,
     pub buffer : Option<Buffer>,
@@ -45,7 +43,6 @@ pub struct OrkanWindow {
 
     pub padding_abs : i32,
 
-//    pub font : Font<'static>,
 
 
     pub renderer : Renderer,
@@ -57,7 +54,6 @@ pub struct OrkanWindow {
     pub exists : bool,
     pub has_keyboard : bool,
     pub data :  Searcher,
-  //  pub cur_search : Vec<char>,
     pub highlighted_pos : usize,
 }
 
@@ -88,8 +84,6 @@ impl OrkanWindow {
                     canvas
                 }
             };
-            // This is forbidden by the borrow checker. The workaround will be to use a substruct
-            // to handle the drawing
 
             self.renderer.render_full_image(canvas, self.valid_elements.clone());
             //self.renderer.draw_full_optimised(canvas);
@@ -188,7 +182,6 @@ impl KeyboardHandler for OrkanWindow {
         }
         
         
-        //self.draw(_conn, _qh);
     }
 
 
@@ -200,7 +193,6 @@ impl KeyboardHandler for OrkanWindow {
             _serial: u32,
             _event: KeyEvent,
         ) {
-        //Probably not needed
     }
 
     fn update_keymap(
@@ -237,7 +229,7 @@ impl OutputHandler for OrkanWindow {
             _qh: &QueueHandle<Self>,
             _output: wayland_client::protocol::wl_output::WlOutput,
         ) {
-        println!("Output Added");
+        //println!("Output Added");
 
 
         
@@ -261,7 +253,7 @@ impl OutputHandler for OrkanWindow {
             _qh: &QueueHandle<Self>,
             _output: wayland_client::protocol::wl_output::WlOutput,
         ) {
-        println!("Output Updated");
+        //println!("Output Updated");
         
     }
 
@@ -287,7 +279,7 @@ impl SeatHandler for OrkanWindow {
 
             self.keyboard = Some(kb);
 
-            println!("Keyboard Added");
+            //println!("Keyboard Added");
         }
     }
     
@@ -338,25 +330,18 @@ impl CompositorHandler for OrkanWindow {
 
 
 
-/*
-        width = if width < 20 {
-            width
-        } else {
-                println!("Padding = {}", self.padding_abs);
-                (width as u32 - 2 * self.padding_abs as u32) as i32
-        }; */
 
-        self.padding_abs = (self.renderer.get_width() as f32 * self.padding_rel).round() as i32;
+//        self.padding_abs = (self.renderer.get_width() as f32 * self.padding_rel).round() as i32;
         //self.renderer.set_width(width as u32);
 
         //println!("New Monitor = {}*{}", self.renderer.set_width(), self.);
-        self.need_update = true;
+ //       self.need_update = true;
         // Resetting some default like margins Original in configure
         //self.layer_surface.set_size(width as u32, self.renderer.get_height());
-        self.layer_surface.set_size(0,20);
-        println!("New Margins: Top = 20, left = {}", self.padding_abs);
-        self.layer_surface.set_margin(20, self.padding_abs, 0, self.padding_abs);
-        self.draw(_conn, _qh);
+ //       self.layer_surface.set_size(0,20);
+ //       println!("New Margins: Top = 20, left = {}", self.padding_abs);
+ //       self.layer_surface.set_margin(20, self.padding_abs, 0, self.padding_abs);
+ //       self.draw(_conn, _qh);
         
     }
 

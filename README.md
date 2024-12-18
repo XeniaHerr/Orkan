@@ -36,12 +36,12 @@ Used for determining the absolute path to a font.
 - [x] List all Binaries
 - [x] Draw Window
 - [x] Show search results
-- [ ] Specify Possible Program Arguments
+- [x] Specify Possible Program Arguments
 - [x] Render Text in Window
 - [ ] Optimise Rendering
 - [x] Handle Keyboard Input
 - [ ] Handle Select
-- [ ] Launch Program
+- [x] Launch Program
 
 
 

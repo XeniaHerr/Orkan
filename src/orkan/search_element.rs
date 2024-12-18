@@ -61,9 +61,10 @@ impl Searcher {
 
 pub fn simple_search(&self, target: &str) -> Vec<SearchElement> {
 
-    let matches = self.content.iter().filter(|x| x.search_string.contains(target)).cloned().collect::<Vec<_>>();
+    let mut matches = self.content.iter().filter(|x| x.search_string.contains(target)).cloned().collect::<Vec<_>>();
 
-    return matches;
+    matches.sort_by(|a, b| a.search_string.len().cmp(&b.search_string.len()));
+    return matches
 
 }
 
