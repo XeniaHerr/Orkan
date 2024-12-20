@@ -6,6 +6,8 @@ use smithay_client_toolkit::{self, compositor::{CompositorHandler, CompositorSta
 
 use wayland_client::{protocol::{wl_keyboard, wl_seat, wl_shm, wl_surface}, Connection, QueueHandle};
 
+use crate::orkan::search_element;
+
 use super::search_element::{Searcher, SearchElement};
 
 use super::draw_utils::Renderer;
@@ -13,7 +15,7 @@ use super::draw_utils::Renderer;
 
 use nix::unistd::execve;
 
-use std::ffi::CString;
+use std::{cmp::{max, min}, ffi::CString};
 
 use std::env;
 
@@ -50,21 +52,29 @@ pub struct OrkanWindow {
     pub valid_elements : Vec<SearchElement>,
 
 
-    pub padding_rel : f32, //TODO: Make Padding proportional
     pub exists : bool,
     pub has_keyboard : bool,
     pub data :  Searcher,
     pub highlighted_pos : usize,
+    pub handler : fn(&String),
 }
-
 
 
 impl OrkanWindow {
 
+    fn draw2(&mut self, conn: &Connection, qh: &QueueHandle<Self>) {
+        let (width, height) = (self.renderer.get_width(), self.renderer.get_height());
 
+            let buffer = self.buffer.get_or_insert_with(|| {
+                self.pool.create_buffer(width as i32, height as i32, width as i32 * 4, wl_shm::Format::Argb8888).expect("create Buffer").0
+            });
+
+
+    }
+
+//TODO: Try to reuse the existing buffer if no change is needed.
     fn draw(&mut self, _conn: &Connection, qh: &QueueHandle<Self>) {
 
-        //println!("Drawing");
 
             let (width, height) = (self.renderer.get_width() , self.renderer.get_height());
 
@@ -80,13 +90,19 @@ impl OrkanWindow {
                 None => {
                     let (second, canvas) = self.pool.create_buffer(width as i32, height as i32, width as i32 * 4, wl_shm::Format::Argb8888).expect("create Buffer");
 
+                    // A new buffer has to be always redrawn
+                    self.need_update = true;
                     *buffer = second;
                     canvas
                 }
             };
 
-            self.renderer.render_full_image(canvas, self.valid_elements.clone());
-            //self.renderer.draw_full_optimised(canvas);
+            //the Framework is making a lot of uneccecary calls to frame(). We only redraw the
+            //buffer when we know that it is nececcary
+            if self.need_update == true {
+                self.renderer.render_full_image(canvas, self.valid_elements.clone(), self.highlighted_pos);
+                self.need_update = false;
+            }
             self.layer_surface.wl_surface().damage_buffer(0,0, width as i32, height as i32);
 
             self.layer_surface.wl_surface().frame(qh, self.layer_surface.wl_surface().clone());
@@ -94,7 +110,6 @@ impl OrkanWindow {
 
             self.layer_surface.commit();
 
-            self.need_update = false;
     }
 
 
@@ -144,44 +159,50 @@ impl KeyboardHandler for OrkanWindow {
             _event: KeyEvent,
         ) {
 
-        self.need_update = true;
-        if _event.keysym == Keysym::Escape {
+        match _event.keysym {
+
+            Keysym::Escape => {
             self.exists = false;
             return;
-        }
+            }
 
-        if _event.keysym == Keysym::BackSpace {
 
-            self.renderer.cur_search.pop();
-            //TODO: Sort List and Redraw
-            println!("Backspace Pressed");
-            self.valid_elements = self.data.simple_search(self.renderer.cur_search.iter().collect::<String>().as_str());
-        }
-
-        else if _event.keysym == Keysym::Return {
-            //TODO: Handle spawning Process
+            Keysym::Return => {
             println!("Return Pressed");
-            println!("Selected: {}", self.valid_elements[0].search_string);
+            println!("Selected: {}", self.valid_elements[self.highlighted_pos].search_string);
             self.exists = false;
 
-            //unsafe {
 
-                let command = CString::new(self.valid_elements[0].ful_path.clone()).unwrap();
+            (self.handler)(&self.valid_elements[self.highlighted_pos].ful_path);
+            }
 
-                let args = vec![CString::new(self.valid_elements[0].ful_path.clone()).unwrap()];
+            Keysym::BackSpace => {
+            self.renderer.cur_search.pop();
+            println!("Backspace Pressed");
+            self.valid_elements = self.data.simple_search(self.renderer.cur_search.iter().collect::<String>().as_str());
+            }
 
-                let env = env::vars().map(|(k,v)| { CString::new(format!("{}={}", k,v)).unwrap()}).collect::<Vec<CString>>();
-                execve(&command, &args, &env).expect("Failed to execute");
-            //}
-        }
-        else if let Some(key) = _event.keysym.key_char() { 
+            Keysym::Right => {
+            self.highlighted_pos = min(self.highlighted_pos +1, self.valid_elements.len()-1);
+            }
+
+            Keysym::Left => {
+            self.highlighted_pos = if self.highlighted_pos == 0 { 0 } else {self.highlighted_pos -1};
+            }
+
+
+            _ => {
+
+                if let Some(key) = _event.keysym.key_char() {
             self.renderer.cur_search.push(key);
-            //TODO: Sort List and Redraw
             println!("Key Pressed: {key:?}");
             self.valid_elements = self.data.simple_search(self.renderer.cur_search.iter().collect::<String>().as_str());
+                }
+            }
         }
+
         
-        
+       self.need_update = true; 
     }
 
 
@@ -229,7 +250,6 @@ impl OutputHandler for OrkanWindow {
             _qh: &QueueHandle<Self>,
             _output: wayland_client::protocol::wl_output::WlOutput,
         ) {
-        //println!("Output Added");
 
 
         
@@ -253,7 +273,6 @@ impl OutputHandler for OrkanWindow {
             _qh: &QueueHandle<Self>,
             _output: wayland_client::protocol::wl_output::WlOutput,
         ) {
-        //println!("Output Updated");
         
     }
 
@@ -279,7 +298,6 @@ impl SeatHandler for OrkanWindow {
 
             self.keyboard = Some(kb);
 
-            //println!("Keyboard Added");
         }
     }
     
@@ -316,7 +334,6 @@ impl CompositorHandler for OrkanWindow {
             _surface: &wl_surface::WlSurface,
             _time: u32,
         ) {
-        //println!("Drawing Frame");
         self.draw(conn, qh);
     }
 
@@ -327,22 +344,6 @@ impl CompositorHandler for OrkanWindow {
             _surface: &wl_surface::WlSurface,
             _output: &wayland_client::protocol::wl_output::WlOutput,
         ) {
-
-
-
-
-//        self.padding_abs = (self.renderer.get_width() as f32 * self.padding_rel).round() as i32;
-        //self.renderer.set_width(width as u32);
-
-        //println!("New Monitor = {}*{}", self.renderer.set_width(), self.);
- //       self.need_update = true;
-        // Resetting some default like margins Original in configure
-        //self.layer_surface.set_size(width as u32, self.renderer.get_height());
- //       self.layer_surface.set_size(0,20);
- //       println!("New Margins: Top = 20, left = {}", self.padding_abs);
- //       self.layer_surface.set_margin(20, self.padding_abs, 0, self.padding_abs);
- //       self.draw(_conn, _qh);
-        
     }
 
     fn surface_leave(
@@ -400,8 +401,6 @@ impl  LayerShellHandler for OrkanWindow {
             configure: LayerSurfaceConfigure,
             _serial: u32,
         ) {
-
-        //println!("Configure");
 
         self.need_update = true;
 

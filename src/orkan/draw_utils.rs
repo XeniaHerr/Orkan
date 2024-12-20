@@ -186,10 +186,9 @@ impl Renderer {
         width
     }
 
-    pub fn render_full_image(&mut self, canvas : &mut [u8], results : Vec<SearchElement>) {
+    pub fn render_full_image(&mut self, canvas : &mut [u8], results : Vec<SearchElement>, pos : usize) {
 
         //     self.cache.build_cache(self.cur_search.clone(), self.height);
-        //canvas.fill(0xff);
 
         draw_rect(canvas, (self.width, self.height), 0, 0, self.width, self.height, self.bg.to_u8());
 
@@ -209,45 +208,28 @@ impl Renderer {
                     let x = x + bb.min.x as u32;
                     let y = y + bb.min.y as u32;
                     let idx = (x + y * self.width) as usize * 4;
-                    //canvas[idx..idx+4].copy_from_slice(&[
-                    //    (self.bg as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
-                   //     (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
-                      //  (0x00 as f32 * v + 0xff as f32 * (1.0 - v)) as u8,
-                      //  0xff as u8]);
                     canvas[idx..idx+4].copy_from_slice(&self.fg.interpolate(&self.bg, v));
 
                 })
             }
         }
 
-        //Draw the search queries
-        /*
-         * What i need: - A way to calculate how many characters fit in the line
-         * Take a list of Strings
-         * Wile the sum is smaller that the screen: Add the word to the showable list
-         * returns a list of strings to be drawn
-         *
-         * - Take a list of strings and draw them with a seperator on the screen, If a certain
-         * selected index is reached, switch the color for the back and foreground.
-         */
 
         let mut offset : i32 = 200; //Offset in Pixels
 
         let mut index = 0;
         let space = self.width as i32 - offset - 10;
-        //println!("Found {} results, available space: {space}", results.len());
         while (offset < space) && (results.len() > index)  {
 
             let item_width = self.render_length(&results[index]);
 
-            if index == 0 {
+            if index == pos {
                 draw_rect(canvas, (self.width, self.height), offset as u32, 0, item_width as u32, self.height, self.hgl.to_u8());
             }
 
             //println!("Item width: {item_width}");
             //println!("Point = {offset}");
 
-            /* TODO: Implement a way to fill only parts of a rectangle */
 
             let glyphs = self.cache.font.layout(results[index].search_string.as_str(),self.scale, Point {x: offset as f32, y: v_metrics.ascent + 1.0 } );
 
@@ -258,7 +240,7 @@ impl Renderer {
                         let y = y + bb.min.y as u32;
                         let id = (x + y * self.width) as usize * 4;
                         let idx = id;
-                        if index == 0 {
+                        if index == pos {
                     canvas[idx..idx+4].copy_from_slice(&self.fg.interpolate(&self.hgl, v));
                         } else {
                     canvas[idx..idx+4].copy_from_slice(&self.fg.interpolate(&self.bg, v));

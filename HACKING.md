@@ -109,3 +109,15 @@ Ideas to restructure the rendering process
 ## Again Restrucuring
 
 I think the speed gain from caching single letters is marginal. I think a better way would be to cache all binaries into buffers once they are first drawn... Or i skip cahching entirely and focus on the search algorithm...
+
+
+
+## TODO: 
+- [ ] Rewrite Button Handling
+- [ ] Rewrite Main file
+- [ ] Implement Fuzzy Search
+- [ ] Implement Substring Highlighting
+- [ ] Implement Custom Input ways (read from File, read from stdin)
+
+
+Change the way the result is handled. Write two Functions that can be swapped depending to runtime. One that launches a program with args and one that simply prints the result to stdout.

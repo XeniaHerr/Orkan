@@ -1,8 +1,10 @@
-
 use std::env;
 use std::collections::HashMap;
 use std::vec::Vec;
 use std::fs;
+use nix::unistd::execve;
+
+use std::{cmp::{max, min}, ffi::CString};
 
 #[derive(Debug)]
 pub struct SearchElement{
@@ -28,6 +30,10 @@ pub struct Searcher {
 }
 
 impl Searcher {
+
+    pub fn content(&self) -> &Vec<SearchElement> {
+        return &self.content;
+    }
 
  pub fn binary_searcher() -> Self {
 
@@ -59,6 +65,22 @@ impl Searcher {
     return Searcher { content :binaries };
 }
 
+pub fn file_searcher( name : &String) -> Self {
+
+    Result::expect(fs::exists(name), "File does not exist");
+
+    let content = fs::read_to_string(name).unwrap();
+    let mut binaries : Vec<SearchElement> = Vec::new();
+
+    for line in content.lines() {
+        binaries.push(SearchElement { search_string: line.to_string(), matches: Vec::new(), is_selected: false, ful_path: line.to_string() });
+    }
+    return Searcher { content : binaries };
+
+    
+
+}
+
 pub fn simple_search(&self, target: &str) -> Vec<SearchElement> {
 
     let mut matches = self.content.iter().filter(|x| x.search_string.contains(target)).cloned().collect::<Vec<_>>();
@@ -70,4 +92,23 @@ pub fn simple_search(&self, target: &str) -> Vec<SearchElement> {
 
 
 
+}
+
+
+pub fn executer( full_path : &String) {
+
+                //let command = CString::new(full_path.clone()).unwrap();
+
+                let args = vec![CString::new(full_path.clone()).unwrap()];
+
+                let env = env::vars().map(|(k,v)| { CString::new(format!("{}={}", k,v)).unwrap()}).collect::<Vec<CString>>();
+
+                let command = args[0].clone();
+                execve(&command, &args, &env).expect("Failed to execute");
+                panic!("Execve failed");
+}
+
+
+pub fn printer (content : &String) {
+    println!("{}", content);
 }
