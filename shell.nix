@@ -8,6 +8,7 @@ pkg-config
 cargo
 libxkbcommon
 fontconfig
+rust-analyzer
 ];
 
 env = {

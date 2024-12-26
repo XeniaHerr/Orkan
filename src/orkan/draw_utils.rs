@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::boxed;
 use super::search_element::SearchElement;
 
 use rusttype::{self, Font, Scale, Point};
@@ -12,7 +11,7 @@ use super::config::Config;
 
 
 
-fn draw_rect(canvas : &mut [u8], (c_width, x_height) : (u32, u32), x : u32, y : u32, width : u32, height : u32, color : [u8; 4]) {
+fn draw_rect(canvas : &mut [u8], (c_width, _x_height) : (u32, u32), x : u32, y : u32, width : u32, height : u32, color : [u8; 4]) {
 
     for i in 0..height {
         let start = (x + (y + i) *c_width) as usize *4;
@@ -117,6 +116,7 @@ pub struct Renderer {
 
     width : u32,
     height : u32,
+    corner_radius : u32,
     scale : Scale,
 
     fg : Color,
@@ -128,7 +128,7 @@ pub struct Renderer {
 #[allow(dead_code)]
 impl Renderer {
 
-    pub fn new(font : Font<'static>, conf : &Config, width : u32, height : u32) -> Self {
+    pub fn new(font : Font<'static>, conf : &Config, width : u32, height : u32, border_radius : u32) -> Self {
         let fg = conf.fontcolor.clone();
         let bg = conf.backgroundcolor.clone();
         let high = conf.highlight.clone();
@@ -141,6 +141,7 @@ impl Renderer {
             fg : fg,
             bg : bg,
             hgl : high,
+            corner_radius : border_radius,
 
             cache : FontCache::new(font),
         }
@@ -198,7 +199,7 @@ impl Renderer {
 
         let v_metrics = self.cache.font.v_metrics(scale);
 
-        let glyphs = self.cache.font.layout(&input_field, rusttype::Scale::uniform(18.0), rusttype::point(1.0 ,1.0 + v_metrics.ascent));
+        let glyphs = self.cache.font.layout(&input_field, rusttype::Scale::uniform(18.0), rusttype::point(1.0 + self.corner_radius as f32 ,1.0 + v_metrics.ascent));
 
 
         //Drawin the prompt
@@ -253,6 +254,80 @@ impl Renderer {
             index = index + 1;
 
 
+        }
+
+    }
+
+
+    pub fn add_rounding(&self, canvas : &mut [u8]) {
+
+        let (width, height) = (self.width, self.height);
+
+        let radius = self.corner_radius as i32;
+
+
+        //Top left corner
+        let (x_o, y_o) = (radius as f32 -1., radius as f32 - 1.);
+
+        for i in 0..=x_o as i32 {
+            for j in 0..=y_o as i32 {
+                if ((i as f32 - x_o).powf(2.0) + (j as f32 - y_o).powf(2.0)).sqrt() >  radius  as f32 {
+                    let idx = (i + j * width as i32) as usize * 4;
+                    canvas[idx..idx+4].copy_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+                }
+                else if ((i as f32 - x_o).powf(2.0) + (j as f32 - y_o).powf(2.0)).sqrt() >  2. + radius   as f32 {
+                    let idx = (i + j * width as i32) as usize * 4;
+                    canvas[idx..idx+4].copy_from_slice(&[0x00, 0xFF, 0xFF, 0xFF]);
+                }
+            }
+        }
+
+        //Bottom Left
+        let (x_o, y_o) = (radius as f32 -1.,  (height - radius as u32 ) as f32 );
+
+        for i in 0..=radius {
+            for j in y_o as i32 ..height as i32 {
+                if ((i as f32 - x_o).powf(2.0) + (j as f32 - y_o).powf(2.0)).sqrt() >=  1. * radius  as f32 {
+                    let idx = (i + j * width as i32) as usize * 4;
+                    canvas[idx..idx+4].copy_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+                }
+                else if ((i as f32 - x_o).powf(2.0) + (j as f32 - y_o).powf(2.0)).sqrt() >=  2. + radius   as f32 {
+                    let idx = (i + j * width as i32) as usize * 4;
+                    canvas[idx..idx+4].copy_from_slice(&[0x00, 0xFF, 0xFF, 0xFF]);
+                }
+            }
+        }
+
+        //Bottom Right
+        let (x_o, y_o) = ((width - radius  as u32 )as f32, (height - radius  as u32 )as f32);
+
+        for i in x_o as i32..width as i32 {
+            for j in y_o as i32..height as i32 {
+                if ((i as f32 - x_o).powf(2.0) + (j as f32 - y_o).powf(2.0)).sqrt() >  radius  as f32 {
+                    let idx = (i + j * width as i32) as usize * 4;
+                    canvas[idx..idx+4].copy_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+                }
+                else if ((i as f32 - x_o).powf(2.0) + (j as f32 - y_o).powf(2.0)).sqrt() >  2. + radius   as f32 {
+                    let idx = (i + j * width as i32) as usize * 4;
+                    canvas[idx..idx+4].copy_from_slice(&[0x88, 0xFF, 0xFF, 0xFF]);
+                }
+            }
+        }
+
+        //Top right
+        let (x_o, y_o) = ((width - radius as u32 ) as f32, radius as f32 - 1.);
+
+        for i in x_o as i32..width as i32{
+            for j in 0 as i32 ..=radius as i32 {
+                if ((i as f32 - x_o).powf(2.0) + (j as f32 - y_o).powf(2.0)).sqrt() >=  1. * radius  as f32 {
+                    let idx = (i + j * width as i32) as usize * 4;
+                    canvas[idx..idx+4].copy_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+                }
+                else if ((i as f32 - x_o).powf(2.0) + (j as f32 - y_o).powf(2.0)).sqrt() >=  2. + radius   as f32 {
+                    let idx = (i + j * width as i32) as usize * 4;
+                    canvas[idx..idx+4].copy_from_slice(&[0x88, 0xFF, 0xFF, 0xFF]);
+                }
+            }
         }
 
     }

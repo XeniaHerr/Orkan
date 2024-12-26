@@ -13,6 +13,7 @@ pub struct Color {
 }
 
 
+#[allow(dead_code)]
 impl Color {
     pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
         Color { r, g, b, a}
@@ -38,7 +39,8 @@ impl Color {
 
     pub fn from_hex_string(s : &str) -> Result<Color, std::num::ParseIntError> {
         if s.len() != 6 {
-            panic!("Hex String not valid");
+
+            panic!("Couldn't parse Hex number");
 
         }
 

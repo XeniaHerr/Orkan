@@ -27,6 +27,9 @@ pub struct Config {
     #[arg(long, global = true, default_value_t = 20)]
     pub height : i32,
 
+    #[arg(long, global = true, default_value_t = 0)]
+    pub curve_radius: i32,
+
     #[command(subcommand)]
      pub subcommand: Option<SubCommand>,
 }

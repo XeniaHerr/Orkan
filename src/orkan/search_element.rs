@@ -4,7 +4,7 @@ use std::vec::Vec;
 use std::fs;
 use nix::unistd::execve;
 
-use std::{cmp::{max, min}, ffi::CString};
+use std::ffi::CString;
 
 #[derive(Debug)]
 pub struct SearchElement{

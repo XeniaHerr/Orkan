@@ -108,7 +108,7 @@ Ideas to restructure the rendering process
 
 ## Again Restrucuring
 
-I think the speed gain from caching single letters is marginal. I think a better way would be to cache all binaries into buffers once they are first drawn... Or i skip cahching entirely and focus on the search algorithm...
+I think the speed gain from aching single letters is marginal. I think a better way would be to cache all binaries into buffers once they are first drawn... Or i skip caching entirely and focus on the search algorithm...
 
 
 
@@ -121,3 +121,14 @@ I think the speed gain from caching single letters is marginal. I think a better
 
 
 Change the way the result is handled. Write two Functions that can be swapped depending to runtime. One that launches a program with args and one that simply prints the result to stdout.
+
+
+
+## Corners
+
+
+- Parameter : $r$ in ptx.
+
+Set a point  $r$ ptx away from the left, right corners (center). Every ptx that is not inside the circle with radius $r$ is set to opacity 0. I don't know if or how this will work.
+
+

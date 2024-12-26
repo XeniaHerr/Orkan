@@ -1,5 +1,4 @@
 mod orkan;
-
 use orkan::draw_utils::Renderer;
 use orkan::search_element;
 use orkan::search_element::Searcher;
@@ -58,7 +57,7 @@ fn main() {
     layer.set_margin(config.top_margin , config.left_margin, 0, config.left_margin);
     layer.commit();
 
-    let renderer : Renderer = Renderer::new(font,&config, 0, config.height as u32);
+    let renderer : Renderer = Renderer::new(font,&config, 0, config.height as u32, config.curve_radius as u32);
 
     // This pool has some stupid default values, because i don't know how big the screen will be
     let pool = SlotPool::new(1920* 1080 *4, &shm).expect("Failed to create pool");
@@ -132,7 +131,7 @@ fn main() {
     };
 
     loop {
-        event_queue.blocking_dispatch(&mut window).unwrap();
+       event_queue.blocking_dispatch(&mut window).unwrap();
 
         if !window.exists {
             break;

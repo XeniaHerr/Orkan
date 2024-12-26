@@ -6,18 +6,15 @@ use smithay_client_toolkit::{self, compositor::{CompositorHandler, CompositorSta
 
 use wayland_client::{protocol::{wl_keyboard, wl_seat, wl_shm, wl_surface}, Connection, QueueHandle};
 
-use crate::orkan::search_element;
 
 use super::search_element::{Searcher, SearchElement};
 
 use super::draw_utils::Renderer;
 
 
-use nix::unistd::execve;
 
-use std::{cmp::{max, min}, ffi::CString};
+use std::cmp::min;
 
-use std::env;
 
 
 
@@ -60,12 +57,13 @@ pub struct OrkanWindow {
 }
 
 
+#[allow(dead_code)]
 impl OrkanWindow {
 
-    fn draw2(&mut self, conn: &Connection, qh: &QueueHandle<Self>) {
+    fn draw2(&mut self, _conn: &Connection, _qh: &QueueHandle<Self>) {
         let (width, height) = (self.renderer.get_width(), self.renderer.get_height());
 
-            let buffer = self.buffer.get_or_insert_with(|| {
+            let _buffer = self.buffer.get_or_insert_with(|| {
                 self.pool.create_buffer(width as i32, height as i32, width as i32 * 4, wl_shm::Format::Argb8888).expect("create Buffer").0
             });
 
@@ -101,6 +99,7 @@ impl OrkanWindow {
             //buffer when we know that it is nececcary
             if self.need_update == true {
                 self.renderer.render_full_image(canvas, self.valid_elements.clone(), self.highlighted_pos);
+                self.renderer.add_rounding(canvas);
                 self.need_update = false;
             }
             self.layer_surface.wl_surface().damage_buffer(0,0, width as i32, height as i32);
